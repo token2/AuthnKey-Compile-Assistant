@@ -59,7 +59,7 @@ def change_package_name(project_dir):
             shutil.rmtree(old_base)
     
     # Update package declarations in all Kotlin files
-    for kt_file in new_base.glob("**/*.kt"):
+    for kt_file in new_base.glob("**/*.*" ):
         content = kt_file.read_text()
         content = re.sub(
             f"^package {re.escape(old_package)}",
@@ -72,7 +72,7 @@ def change_package_name(project_dir):
     # Update imports in other source directories
     test_base = Path(project_dir) / "app" / "src" / "test" / "java"
     if test_base.exists():
-        for kt_file in test_base.glob("**/*.kt"):
+        for kt_file in test_base.glob("**/*.*" ):
             content = kt_file.read_text()
             content = content.replace(old_package, new_package)
             kt_file.write_text(content)
