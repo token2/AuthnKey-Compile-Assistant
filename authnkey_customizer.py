@@ -59,7 +59,7 @@ def change_package_name(project_dir):
             shutil.rmtree(old_base)
     
     # Update package declarations in all Kotlin files
-    for kt_file in new_base.glob("**/*.*" ):
+    for kt_file in new_base.glob("**/*.kt" ):
         content = kt_file.read_text()
         content = re.sub(
             f"^package {re.escape(old_package)}",
@@ -68,14 +68,38 @@ def change_package_name(project_dir):
             flags=re.MULTILINE
         )
         kt_file.write_text(content)
+        
+      
     
     # Update imports in other source directories
     test_base = Path(project_dir) / "app" / "src" / "test" / "java"
     if test_base.exists():
-        for kt_file in test_base.glob("**/*.*" ):
+        for kt_file in test_base.glob("**/*.kt" ):
             content = kt_file.read_text()
             content = content.replace(old_package, new_package)
             kt_file.write_text(content)
+            
+    # Update imports in other source directories
+    test_base = Path(project_dir) / "app" / "src" / "test" / "java"
+    if test_base.exists():
+        for kt_file in test_base.glob("**/*.xml" ):
+            content = kt_file.read_text()
+            content = content.replace(old_package, new_package)
+            kt_file.write_text(content)   
+
+# Iterate over all XML files
+    for xml_file in Path(project_dir).rglob("*.xml"):
+        try:
+            content = xml_file.read_text(encoding="utf-8")
+        # Replace old package references in element names
+            content_new = re.sub(rf"\b{re.escape(old_package)}\.", f"{new_package}.", content)
+        
+            if content != content_new:
+                xml_file.write_text(content_new, encoding="utf-8")
+                print(f"Updated {xml_file}")
+        except Exception as e:
+            print(f"Failed to update {xml_file}: {e}")            
+         
 
 def replace_strings(project_dir):
     """Replace 'Authnkey' with 'FIDO Bridge' in all strings.xml files"""
