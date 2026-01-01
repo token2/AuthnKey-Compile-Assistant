@@ -279,6 +279,13 @@ def replace_icons(project_dir, icon_source=None):
             else:
                 print(f"  Skipped {icon_path} (PIL not available)")
     
+    # Also update ic_launcher.xml files
+    ic_launcher_foreground = res_dir / "drawable" / "ic_launcher_foreground.xml"
+    new_ic_launcher_foreground = Path("./ic_launcher_foreground.xml")
+    
+    if ic_launcher_foreground.is_file() and new_ic_launcher_foreground.is_file():
+        shutil.copy(new_ic_launcher_foreground, ic_launcher_foreground)
+    
     # Also update ic_launcher.xml files in color directories
     for color_dir in res_dir.glob("values*/"):
         ic_launcher_xml = color_dir / "ic_launcher_background.xml"
