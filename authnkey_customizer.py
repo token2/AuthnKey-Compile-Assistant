@@ -314,6 +314,53 @@ def replace_icons(project_dir, icon_source=None):
         if generate_placeholder_icon(str(playstore_icon_path), size=512):
             print(f"  Generated placeholder {playstore_icon_path}")
 
+def add_package_query_to_manifest(project_dir, package_name):
+    """Add a <queries> block to AndroidManifest.xml for package visibility on Android 11+"""
+    print(f"Adding package query for '{package_name}' to AndroidManifest.xml...")
+    
+    manifest_path = Path(project_dir) / "app" / "src" / "main" / "AndroidManifest.xml"
+    
+    if not manifest_path.exists():
+        print(f"  Warning: {manifest_path} not found")
+        return
+    
+    content = manifest_path.read_text(encoding='utf-8')
+    
+    # Check if package already exists in queries
+    if f'android:name="{package_name}"' in content and '<queries>' in content:
+        print(f"  Package '{package_name}' already exists in <queries>")
+        return
+    
+    # Build the package element to add
+    package_element = f'<package android:name="{package_name}" />'
+    
+    # Check if <queries> block already exists
+    if '<queries>' in content:
+        # Add package to existing queries block
+        content = re.sub(
+            r'(<queries>)',
+            f'\\1\n        {package_element}',
+            content
+        )
+    else:
+        # Create new queries block and insert before <application>
+        queries_block = f'''    <queries>
+        {package_element}
+    </queries>
+
+'''
+        # Insert before <application
+        content = re.sub(
+            r'(\n)(\s*)(<application)',
+            f'\\1{queries_block}\\2\\3',
+            content,
+            count=1
+        )
+    
+    manifest_path.write_text(content, encoding='utf-8')
+    print(f"  Updated {manifest_path}")
+
+
 def add_launch_function_to_mainactivity(project_dir):
     """Add function to launch Token2 Companion App in MainActivity.kt"""
     print("Adding Token2 Companion App launcher function...")
@@ -423,6 +470,9 @@ def main():
     # Step 5: Add launcher function
     add_launch_function_to_mainactivity(target_dir)
     
+    # Step 6: Add package query to manifest
+    add_package_query_to_manifest(target_dir, "com.token2.companion")
+    
     print("\n" + "=" * 60)
     print("Customization complete!")
     print(f"Modified project is in: {target_dir}")
@@ -433,6 +483,7 @@ def main():
     print("  ✓ Token2 Companion App button added to layout")
     print("  ✓ Launcher function added to MainActivity.kt")
     print("  ✓ Icons replaced with Token2 branding")
+    print("  ✓ Package query added to AndroidManifest.xml")
     print("\nNext steps:")
     print("1. Review the changes in the generated files")
     print("2. Test the build: cd {} && ./gradlew assembleDebug".format(target_dir))
